@@ -193,6 +193,9 @@ _inflight: dict[str, asyncio.Task] = {}
 # cached rather than lost. Keep it inside the pod's termination grace period.
 SHUTDOWN_GRACE_SECONDS = 20
 
+# Testing only: delay before each model call, to force the 202 path.
+LLM_TEST_DELAY_SECONDS = 5
+
 
 async def _fetch_and_cache(cache_key: str, req_data: SearchModel):
     """Get an answer from the model and cache it.
@@ -202,6 +205,9 @@ async def _fetch_and_cache(cache_key: str, req_data: SearchModel):
     there is none; never raises, other than being cancelled at shutdown.
     """
     try:
+        # Testing only: hold the model call back so the request outlasts
+        # RESPONSE_TIMEOUT_SECONDS and gets the 202.
+        await asyncio.sleep(LLM_TEST_DELAY_SECONDS)
         response = await llm_request(req_data)
         if isinstance(response, Exception):
             return response
